@@ -36,16 +36,12 @@ namespace ZagrosDesktop
             if (ReadConnectionString ())
                 {
                 CreateTables ();
-                if (CopyAndAttachLocalDB () && CheckDBAttached2SqlServerExpress ())
-                    {
-                    //MessageBox.Show ("ديتابيس آماده استفاده");
-                    ZagrApp.RefeedTables (63, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
-                    Application.Run (new frmSwitchBoard ());
-                    }
-                else
-                    {
-                    MessageBox.Show ("خطا: دسترسي به ديتابيس محلي برنامه ممکن نيست\n\n ديتابيس اسکيو ال سرور اکسپرس را با نام پيش فرض نصب کنيد");
-                    }
+                //try copy and test DB on local server
+                CopyAndAttachLocalDB ();
+                CheckDBAttached2SqlServerExpress ();
+                //feed tables (using db in cnn.txt)
+                ZagrApp.RefeedTables (63, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                Application.Run (new frmSwitchBoard ());
                 }
             }        
         public static bool CopyAndAttachLocalDB ()
@@ -246,54 +242,7 @@ namespace ZagrosDesktop
                 }
             DB.Cnn.Close ();
             }
-        public static void AddNewPerson (string newTitle, string newName, string newNote)
-            {
-            try
-                {
-                DB.strSQL = "INSERT INTO Persons (Title , Name, Note) VALUES (@title, @name, @note);";
-                DB.Cnn.Open ();
-                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
-                cmdx.CommandType = CommandType.Text;
-                cmdx.Parameters.AddWithValue ("@title", newTitle);
-                cmdx.Parameters.AddWithValue ("@name", newName);
-                cmdx.Parameters.AddWithValue ("@note", newNote);
-                int i = cmdx.ExecuteNonQuery ();
-                DB.Cnn.Close ();
-                }
-            catch (Exception ex)
-                {
-                //MessageBox.Show (ex.ToString ());
-                }
-            }
-        public static bool UpdatePerson (string newTitle, string newName, string newNote, int personid)
-            {
-            if (personid != 0)
-                {
-                try
-                    {
-                    DB.strSQL = "UPDATE Persons SET Title=@title, Name=@name, Note=@note WHERE ID=@id";
-                    DB.Cnn.Open ();
-                    var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
-                    cmdx.CommandType = CommandType.Text;
-                    cmdx.Parameters.AddWithValue ("@title", newTitle);
-                    cmdx.Parameters.AddWithValue ("@name", newName);
-                    cmdx.Parameters.AddWithValue ("@note", newNote);
-                    cmdx.Parameters.AddWithValue ("@id", personid.ToString());
-                    int i = (int) cmdx.ExecuteNonQuery ();
-                    DB.Cnn.Close ();
-                    return true;
-                    }
-                catch (Exception ex)
-                    {
-                    //MessageBox.Show (ex.ToString ());
-                    return false;
-                    }
-                }
-            else
-                {
-                return false;
-                }
-            }
+        //units
         public static void AddNewUnit (string newName, int newArea)
             {
             if (newName.Length > 10)
@@ -344,6 +293,56 @@ namespace ZagrosDesktop
                 return false;
                 }
             }
+        //persons
+        public static void AddNewPerson (string newTitle, string newName, string newNote)
+            {
+            try
+                {
+                DB.strSQL = "INSERT INTO Persons (Title , Name, Note) VALUES (@title, @name, @note);";
+                DB.Cnn.Open ();
+                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
+                cmdx.CommandType = CommandType.Text;
+                cmdx.Parameters.AddWithValue ("@title", newTitle);
+                cmdx.Parameters.AddWithValue ("@name", newName);
+                cmdx.Parameters.AddWithValue ("@note", newNote);
+                int i = cmdx.ExecuteNonQuery ();
+                DB.Cnn.Close ();
+                }
+            catch (Exception ex)
+                {
+                //MessageBox.Show (ex.ToString ());
+                }
+            }
+        public static bool UpdatePerson (string newTitle, string newName, string newNote, int personid)
+            {
+            if (personid != 0)
+                {
+                try
+                    {
+                    DB.strSQL = "UPDATE Persons SET Title=@title, Name=@name, Note=@note WHERE ID=@id";
+                    DB.Cnn.Open ();
+                    var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
+                    cmdx.CommandType = CommandType.Text;
+                    cmdx.Parameters.AddWithValue ("@title", newTitle);
+                    cmdx.Parameters.AddWithValue ("@name", newName);
+                    cmdx.Parameters.AddWithValue ("@note", newNote);
+                    cmdx.Parameters.AddWithValue ("@id", personid.ToString());
+                    int i = (int) cmdx.ExecuteNonQuery ();
+                    DB.Cnn.Close ();
+                    return true;
+                    }
+                catch (Exception ex)
+                    {
+                    //MessageBox.Show (ex.ToString ());
+                    return false;
+                    }
+                }
+            else
+                {
+                return false;
+                }
+            }
+        //transactions
         public static int AddNewTransaction (Transactionx tranxn)
             {
             try
@@ -388,6 +387,7 @@ namespace ZagrosDesktop
                 return false;
                 }
             }
+        //periodUnits
         public static void GetPeriodUnitsData (int intPeriod)
             {
             DB.DS.Tables ["tblPeriodsUnits"].Clear ();
@@ -395,6 +395,94 @@ namespace ZagrosDesktop
             DB.DA = new SqlDataAdapter ("SELECT PeriodsUnits.ID, Period_ID, Unit_ID, Owner, PersonsOwner.Name AS OwnerName, Resident, PersonsResident.Name AS ResidentName, IsRent, People, WaterFrom, WaterTo, ChargeBill, PeriodsUnits.Note, Area FROM PeriodsUnits INNER JOIN Units ON PeriodsUnits.Unit_ID = Units.ID LEFT JOIN Persons AS PersonsOwner ON PeriodsUnits.Owner = PersonsOwner.ID LEFT JOIN Persons AS PersonsResident ON PeriodsUnits.Resident = PersonsResident.ID WHERE Period_ID = " + intPeriod.ToString () + " ORDER BY Period_ID, Unit_ID;", DB.Cnn);
             DB.DA.Fill (DB.DS, "tblPeriodsUnits");
             DB.Cnn.Close ();
+            }
+        public static bool UpdatePeriodsUnitsRecord (int unitid, string fieldName, string fieldValue)
+            {
+            try
+                {
+                if (fieldName == "Note")
+                    {
+                    //FieldValue is a string
+                    DB.strSQL = "UPDATE PeriodsUnits SET " + fieldName + " = N'" + fieldValue + "' WHERE ID= " + unitid.ToString ();
+                    }
+                else
+                    {
+                    //FieldValue is a number
+                    DB.strSQL = "UPDATE PeriodsUnits SET " + fieldName + " = " + fieldValue + " WHERE ID= " + unitid.ToString ();
+                    }
+                DB.Cnn.Open ();
+                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
+                cmdx.CommandType = CommandType.Text;
+                int i = cmdx.ExecuteNonQuery ();
+                DB.Cnn.Close ();
+                return true;
+                }
+            catch (Exception ex)
+                {
+                DB.Cnn.Close ();
+                MessageBox.Show (ex.ToString ());
+                return false;
+                }
+            }
+        public static void AddUnit2PeriodsUnits (int periodId, int unitId, int ownerId, int residentId, int people, int waterFrom)
+            {
+            DB.strSQL = "INSERT INTO PeriodsUnits (Period_ID, Unit_ID, Owner, Resident, People, WaterFrom) VALUES (@periodid, @unitid, @owner, @resident, @people, @waterfrom);";
+            DB.Cnn.Open ();
+            var cmdx2 = new SqlCommand (DB.strSQL, DB.Cnn);
+            cmdx2.CommandType = CommandType.Text;
+            cmdx2.Parameters.AddWithValue ("@periodid", periodId.ToString ());
+            cmdx2.Parameters.AddWithValue ("@unitid", unitId.ToString ());
+            cmdx2.Parameters.AddWithValue ("@owner", ownerId.ToString ());
+            cmdx2.Parameters.AddWithValue ("@resident", residentId.ToString ());
+            cmdx2.Parameters.AddWithValue ("@people", people.ToString ());
+            cmdx2.Parameters.AddWithValue ("@waterfrom", waterFrom.ToString ());
+            int id2 = cmdx2.ExecuteNonQuery ();
+            DB.Cnn.Close ();
+            }
+        public static bool RemoveUnitFromPeriodsUnits (int unitid)
+            {
+            try
+                {
+                DB.strSQL = "DELETE FROM PeriodsUnits WHERE ID=@id";
+                DB.Cnn.Open ();
+                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
+                cmdx.CommandType = CommandType.Text;
+                cmdx.Parameters.AddWithValue ("@id", unitid.ToString ());
+                cmdx.ExecuteNonQuery ();
+                DB.Cnn.Close ();
+                return true;
+                }
+            catch (Exception ex)
+                {
+                MessageBox.Show (ex.ToString ());
+                return false;
+                }
+            }
+        //periods
+        public static int AddNewPeriod ()
+            {
+            try
+                {
+                DB.strSQL = "INSERT INTO Periods (Name, BookKeeper, Note, DateStart, DateEnd, DateCnt, IsActive) VALUES (@name, @bookkeeper, @note, @datestart, @dateend, @datecnt, @isactive); SELECT CAST (scope_identity() as int)";
+                DB.Cnn.Open ();
+                var cmdx1 = new SqlCommand (DB.strSQL, DB.Cnn);
+                cmdx1.CommandType = CommandType.Text;
+                cmdx1.Parameters.AddWithValue ("@name", Periodx.Name);
+                cmdx1.Parameters.AddWithValue ("@bookkeeper", Periodx.BookKeeper);
+                cmdx1.Parameters.AddWithValue ("@note", Periodx.Note);
+                cmdx1.Parameters.AddWithValue ("@datestart", Periodx.DateStart);
+                cmdx1.Parameters.AddWithValue ("@dateend", Periodx.DateEnd);
+                cmdx1.Parameters.AddWithValue ("@datecnt", Periodx.DateCnt);
+                cmdx1.Parameters.AddWithValue ("@isactive", Periodx.IsActive);
+                int pid = (int) cmdx1.ExecuteScalar ();
+                DB.Cnn.Close ();
+                return pid;
+                }
+            catch (Exception ex)
+                {
+                MessageBox.Show (ex.ToString ());
+                return 0;
+                }
             }
         public static bool UpdatePeriodInfo ()
             {
@@ -467,93 +555,7 @@ namespace ZagrosDesktop
                 return false;
                 }
             }
-        public static bool UpdatePeriodsUnitsRecord (int unitid, string fieldName, string fieldValue)
-            {
-            try
-                {
-                if (fieldName == "Note")
-                    {
-                    //FieldValue is a string
-                    DB.strSQL = "UPDATE PeriodsUnits SET " + fieldName + " = N'" + fieldValue + "' WHERE ID= " + unitid.ToString ();
-                    }
-                else
-                    {
-                    //FieldValue is a number
-                    DB.strSQL = "UPDATE PeriodsUnits SET " + fieldName + " = " + fieldValue + " WHERE ID= " + unitid.ToString ();
-                    }
-                DB.Cnn.Open ();
-                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
-                cmdx.CommandType = CommandType.Text;
-                int i = cmdx.ExecuteNonQuery ();
-                DB.Cnn.Close ();
-                return true;
-                }
-            catch (Exception ex)
-                {
-                DB.Cnn.Close ();
-                MessageBox.Show (ex.ToString ());
-                return false;
-                }
-            }
-        public static int AddNewPeriod ()
-            {
-            try
-                {
-                DB.strSQL = "INSERT INTO Periods (Name, BookKeeper, Note, DateStart, DateEnd, DateCnt, IsActive) VALUES (@name, @bookkeeper, @note, @datestart, @dateend, @datecnt, @isactive); SELECT CAST (scope_identity() as int)";
-                DB.Cnn.Open ();
-                var cmdx1 = new SqlCommand (DB.strSQL, DB.Cnn);
-                cmdx1.CommandType = CommandType.Text;
-                cmdx1.Parameters.AddWithValue ("@name", Periodx.Name);
-                cmdx1.Parameters.AddWithValue ("@bookkeeper", Periodx.BookKeeper);
-                cmdx1.Parameters.AddWithValue ("@note", Periodx.Note);
-                cmdx1.Parameters.AddWithValue ("@datestart", Periodx.DateStart);
-                cmdx1.Parameters.AddWithValue ("@dateend", Periodx.DateEnd);
-                cmdx1.Parameters.AddWithValue ("@datecnt", Periodx.DateCnt);
-                cmdx1.Parameters.AddWithValue ("@isactive", Periodx.IsActive);
-                int pid = (int) cmdx1.ExecuteScalar ();
-                DB.Cnn.Close ();
-                return pid;
-                }
-            catch (Exception ex)
-                {
-                MessageBox.Show (ex.ToString ());
-                return 0;
-                }
-            }
-        public static void AddUnit2PeriodsUnits (int periodId, int unitId, int ownerId, int residentId, int people, int waterFrom)
-            {
-            DB.strSQL = "INSERT INTO PeriodsUnits (Period_ID, Unit_ID, Owner, Resident, People, WaterFrom) VALUES (@periodid, @unitid, @owner, @resident, @people, @waterfrom);";
-            DB.Cnn.Open ();
-            var cmdx2 = new SqlCommand (DB.strSQL, DB.Cnn);
-            cmdx2.CommandType = CommandType.Text;
-            cmdx2.Parameters.AddWithValue ("@periodid", periodId.ToString ());
-            cmdx2.Parameters.AddWithValue ("@unitid", unitId.ToString ());
-            cmdx2.Parameters.AddWithValue ("@owner", ownerId.ToString ());
-            cmdx2.Parameters.AddWithValue ("@resident", residentId.ToString ());
-            cmdx2.Parameters.AddWithValue ("@people", people.ToString ());
-            cmdx2.Parameters.AddWithValue ("@waterfrom", waterFrom.ToString ());
-            int id2 = cmdx2.ExecuteNonQuery ();
-            DB.Cnn.Close ();
-            }
-        public static bool RemoveUnitFromPeriodsUnits (int unitid)
-            {
-            try
-                {
-                DB.strSQL = "DELETE FROM PeriodsUnits WHERE ID=@id";
-                DB.Cnn.Open ();
-                var cmdx = new SqlCommand (DB.strSQL, DB.Cnn);
-                cmdx.CommandType = CommandType.Text;
-                cmdx.Parameters.AddWithValue ("@id", unitid.ToString ());
-                cmdx.ExecuteNonQuery ();
-                DB.Cnn.Close ();
-                return true;
-                }
-            catch (Exception ex)
-                {
-                MessageBox.Show (ex.ToString ());
-                return false;
-                }
-            }
+        //calc
         public static bool CalculateCharge (int periodId)
             {
             RefeedTables (63, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} all=63

@@ -76,18 +76,19 @@ namespace ZagrosDesktop
                             ZagrApp.AddUnit2PeriodsUnits (newPeriodId, unitid, ownerid, residentid, people, waterfrom);
                             }
                         }
-                    ZagrApp.RefeedTables (4, true); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (4,false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                     return;
                     }
-                }
-            DialogResult myAnsw = MessageBox.Show ("با ايجاد دوره جديد، اطلاعات واحدها از دوره منتخب شما\n\n" + (Grid_Periods [1, Grid_Periods.CurrentRow.Index].Value) + "\n\n در دوره جديد کپي مي شود\n\nاز اين دوره استفاده مي کنيد؟", "تاييد کنيد", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2, MessageBoxOptions.RightAlign);
-            if (myAnsw == DialogResult.No)
-                {
-                return;
                 }
             else
                 {
                 int oldPeriodId = Convert.ToInt32 (Grid_Periods [0, Grid_Periods.CurrentRow.Index].Value);
+                string oldPeriodName = Grid_Periods [1, Grid_Periods.CurrentRow.Index].Value.ToString();
+                DialogResult myAnsw = MessageBox.Show ("با ايجاد دوره جديد، اطلاعات واحدها از دوره منتخب شما\n\nکد: " + oldPeriodId + "\nنام: " + oldPeriodName + "\n\n در دوره جديد کپي مي شود\n\nاز اين دوره استفاده مي کنيد؟", "تاييد کنيد", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2, MessageBoxOptions.RightAlign);
+                if (myAnsw == DialogResult.No)
+                    {
+                    return;
+                    }
                 //get name of new period
                 ZagrApp.RequestModeNew_Edit = "New";
                 var frmEditPeriod = new frmPeriodEdit ();
@@ -110,11 +111,11 @@ namespace ZagrosDesktop
                             ownerid = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [3]);
                             residentid = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [5]);
                             people = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [8]);
-                            waterfrom = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [9]); //notice: waterTo in old periodUnit goes to waterFrom of the new period
+                            waterfrom = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [10]); //notice: waterTo (col 10) in old periodUnit goes to waterFrom (col 9) of the new period
                             ZagrApp.AddUnit2PeriodsUnits (newPeriodId, unitid, ownerid, residentid, people, waterfrom);
                             }
                         }
-                    ZagrApp.RefeedTables (4, true); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (4, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                     }
                 else
                     {
