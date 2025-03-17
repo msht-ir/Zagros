@@ -40,7 +40,7 @@ namespace ZagrosDesktop
                 CopyAndAttachLocalDB ();
                 CheckDBAttached2SqlServerExpress ();
                 //feed tables (using db in cnn.txt)
-                ZagrApp.RefeedTables (63, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                ZagrApp.RefeedTables (63, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                 Application.Run (new frmSwitchBoard ());
                 }
             }        
@@ -147,7 +147,7 @@ namespace ZagrosDesktop
                     cmdx.CommandType = CommandType.Text;
                     cmdx.ExecuteNonQuery ();
                     DB.Cnn.Close ();
-                    ZagrApp.RefeedTables (63, false);
+                    ZagrApp.RefeedTables (63, false, 0);
                     return true;
                     }
                 catch (Exception ex)
@@ -194,13 +194,39 @@ namespace ZagrosDesktop
         public static string DialogType = "";
         public static string DialogInput = "";
         public static string DialogOutput = "";
-        public static void RefeedTables (int tables2feed, bool onlyActivePeriods)
+        public static void RefeedTables (int tables2feed, bool onlyActivePeriods, int AccCatId)
             {
             DB.Cnn.Open ();
             if ((tables2feed & 1) == 1)
-                {
+                {                
                 DB.DS.Tables ["tblAccs"].Clear ();
-                DB.DA = new SqlDataAdapter ("Select ID, Datum, Subjectx, Amount, Cat_ID, Period_ID, Unit_ID, Note FROM Accs ORDER BY Datum", DB.Cnn);
+                switch (AccCatId)
+                    {
+                    case 0:
+                            {
+                            //all(expenses+payments+charge)
+                            DB.DA = new SqlDataAdapter ("Select ID, Datum, Subjectx, Amount, Cat_ID, Period_ID, Unit_ID, Note FROM Accs ORDER BY Datum", DB.Cnn);
+                            break;
+                            }
+                    case 1:
+                            {
+                            //expenses
+                            DB.DA = new SqlDataAdapter ("Select ID, Datum, Subjectx, Amount, Cat_ID, Period_ID, Unit_ID, Note FROM Accs WHERE Cat_ID IN (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14) ORDER BY Datum", DB.Cnn);
+                            break;
+                            }
+                    case 2:
+                            {
+                            //payments
+                            DB.DA = new SqlDataAdapter ("Select ID, Datum, Subjectx, Amount, Cat_ID, Period_ID, Unit_ID, Note FROM Accs WHERE Cat_ID IN (1, 2) ORDER BY Unit_ID, Datum", DB.Cnn);
+                            break;
+                            }
+                    case 3:
+                            {
+                            //charges
+                            DB.DA = new SqlDataAdapter ("Select ID, Datum, Subjectx, Amount, Cat_ID, Period_ID, Unit_ID, Note FROM Accs WHERE Cat_ID = 3 ORDER BY Unit_ID, Datum", DB.Cnn);
+                            break;
+                            }
+                    }
                 DB.DA.Fill (DB.DS, "tblAccs");
                 }
             if ((tables2feed & 2) == 2)
@@ -558,7 +584,7 @@ namespace ZagrosDesktop
         //calc
         public static bool CalculateCharge (int periodId)
             {
-            RefeedTables (63, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} all=63
+            RefeedTables (63, false, 0); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} all=63
             //1-check uncertain items(cat-15)
             if (SumExpense (periodId, 15) != 0)
                 {
@@ -577,14 +603,14 @@ namespace ZagrosDesktop
                 MessageBox.Show ("تعداد نفرات ساکن در مجتمع در اين دوره را بررسي کنيد");
                 return false;
                 }
-            Periodx.ExpWater = SumExpense(periodId, 5);
-            Periodx.ExpElec = SumExpense(periodId, 6);
-            Periodx.ExpDoorPump = SumExpense(periodId, 11) + SumExpense (periodId, 12);
-            Periodx.ExpGuard = SumExpense(periodId, 4);
-            Periodx.ExpElev1 = SumExpense(periodId, 10);
-            Periodx.ExpElev2 = SumExpense(periodId, 9);
-            Periodx.ExpRepair = SumExpense(periodId, 8);
-            Periodx.ExpMisc = SumExpense(periodId, 7) + SumExpense(periodId, 13) + SumExpense (periodId, 14);
+            Periodx.ExpWater = SumExpense(periodId, 5) * -1;
+            Periodx.ExpElec = SumExpense(periodId, 6) * -1;
+            Periodx.ExpDoorPump = (SumExpense(periodId, 11) + SumExpense (periodId, 12)) * -1;
+            Periodx.ExpGuard = SumExpense(periodId, 4) * -1;
+            Periodx.ExpElev1 = SumExpense(periodId, 10) * -1;
+            Periodx.ExpElev2 = SumExpense(periodId, 9) * -1;
+            Periodx.ExpRepair = SumExpense(periodId, 8) * -1;
+            Periodx.ExpMisc = (SumExpense(periodId, 7) + SumExpense(periodId, 13) + SumExpense (periodId, 14)) * -1;
             Periodx.AreaTotal = SumArea(periodId);
             //3-save sums to period
             if (UpdatePeriodExpenseData (periodId))
@@ -609,7 +635,7 @@ namespace ZagrosDesktop
                     UpdatePeriodsUnitsRecord (PeriodUnit.Id, "ChargeBill", PeriodUnit.ChargeBill.ToString());
                     }
                 }
-            RefeedTables (12, false);
+            RefeedTables (12, false, 0);
             return true;
             }
         public static int SumExpense (int periodId, int catId)
@@ -671,7 +697,7 @@ namespace ZagrosDesktop
                     {
                     T.Id = 0;
                     T.Subjectx = "شارژ " + Periodx.Name;
-                    T.Amount = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [11]);
+                    T.Amount = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [11]) * -1;
                     T.CatId = 3; //units charges
                     T.PeriodId = 0;
                     T.UnitId = Convert.ToInt32 (DB.DS.Tables ["tblPeriodsUnits"].Rows [u] [2]);

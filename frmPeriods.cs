@@ -18,7 +18,7 @@ namespace ZagrosDesktop
             }
         private void frmPeriods_Load (object sender, EventArgs e)
             {
-            ZagrApp.RefeedTables (4, false);//{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+            ZagrApp.RefeedTables (4, false, 0);//{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} //0:all 1:expenses 2:payments 3:charge
             Grid_Periods.DataSource = DB.DS.Tables ["tblPeriods"];
             Grid_Data.DataSource = null;
             FormatGridCols (1); //1:gridPerids 2:gridData
@@ -76,7 +76,7 @@ namespace ZagrosDesktop
                             ZagrApp.AddUnit2PeriodsUnits (newPeriodId, unitid, ownerid, residentid, people, waterfrom);
                             }
                         }
-                    ZagrApp.RefeedTables (4,false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (4,false, 0); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} //0:all 1:expenses 2:payments 3:charge
                     return;
                     }
                 }
@@ -115,7 +115,7 @@ namespace ZagrosDesktop
                             ZagrApp.AddUnit2PeriodsUnits (newPeriodId, unitid, ownerid, residentid, people, waterfrom);
                             }
                         }
-                    ZagrApp.RefeedTables (4, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (4, false, 0); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} //0:all 1:expenses 2:payments 3:charge
                     }
                 else
                     {
@@ -127,7 +127,6 @@ namespace ZagrosDesktop
             {
             try
                 {
-                //if ((Grid_Periods.Rows.Count == 0) || (Grid_Periods.SelectedRows [0].Index == -1))
                 if ((Grid_Periods.Rows.Count == 0) || (Grid_Periods.SelectedRows.Count == 0))
                     {
                     return;
@@ -135,7 +134,7 @@ namespace ZagrosDesktop
                 else
                     {
                     int pid = Convert.ToInt32 (Grid_Periods.SelectedRows [0].Cells [0].Value);
-                    Periodx.Name = Grid_Periods.SelectedRows [0].Cells [1].Value.ToString();
+                    Periodx.Name = Grid_Periods.SelectedRows [0].Cells [1].Value.ToString ();
                     if (ZagrApp.CalculateCharge (pid))
                         {
                         Grid_Periods.ClearSelection ();
@@ -278,7 +277,7 @@ namespace ZagrosDesktop
                 if (ZagrApp.UpdatePeriodInfo ())
                     {
                     //refresh grid
-                    ZagrApp.RefeedTables (4, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (4, false, 0); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} //0:all 1:expenses 2:payments 3:charge
                     //MessageBox.Show ("OK Saved");
                     }
                 else

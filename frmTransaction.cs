@@ -12,7 +12,7 @@ namespace ZagrosDesktop
             }
         private void frmTransaction_Load (object sender, EventArgs e)
             {
-            ZagrApp.RefeedTables (4, true);//{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+            ZagrApp.RefeedTables (4, true, 0);//{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} //[0]:all 1:expenses 2:payments 3:charge
             //calender setup
             int intYear = Convert.ToInt32 (DateTime.Now.ToString ("yyyy").ToString ());
             if (intYear < 1450)

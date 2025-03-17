@@ -19,7 +19,7 @@ namespace ZagrosDesktop
             }
         private void frmTables_Load (object sender, EventArgs e)
             {
-            ZagrApp.RefeedTables (63, false); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} all=63 
+            ZagrApp.RefeedTables (63, false, 0); //{1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units} all=63 //0:all AccCats
             }
         //btns: Units
         private void btn_Units_Click (object sender, EventArgs e)
@@ -61,7 +61,7 @@ namespace ZagrosDesktop
                 NewArea = Convert.ToInt32 (CustomInput.ReturnValue.ToString ());
                 }
             ZagrApp.AddNewUnit (NewName, NewArea);
-            ZagrApp.RefeedTables (32, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+            ZagrApp.RefeedTables (32, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
             ShowData ("tblUnits");
             }
         private void btn_EditUnit_Click (object sender, EventArgs e)
@@ -106,7 +106,7 @@ namespace ZagrosDesktop
                     NewArea = Convert.ToInt32 (CustomInput.ReturnValue.ToString ());
                     }
                 ZagrApp.UpdateUnit (NewName, NewArea, UnitId);
-                ZagrApp.RefeedTables (32, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                ZagrApp.RefeedTables (32, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                 ShowData ("tblUnits");
                 }
             }
@@ -166,7 +166,7 @@ namespace ZagrosDesktop
                 PersonNote = CustomInput.ReturnValue.ToString ();
                 }
             ZagrApp.AddNewPerson (PersonTitle, PersonName, PersonNote);
-            ZagrApp.RefeedTables (16, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+            ZagrApp.RefeedTables (16, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
             ShowData ("tblPersons");
             }
         private void btn_EditPerson_Click (object sender, EventArgs e)
@@ -180,9 +180,9 @@ namespace ZagrosDesktop
                 string PersonName = "";
                 string PersonTitle = "";
                 string PersonNote = "";
-                int PersonId = Convert.ToInt32(Grid_Tables.SelectedRows [0].Cells [0].Value.ToString ());
+                int PersonId = Convert.ToInt32 (Grid_Tables.SelectedRows [0].Cells [0].Value.ToString ());
                 CustomInput.InputType = "string";    //number, string
-                CustomInput.DefaultValue = Grid_Tables.SelectedRows[0].Cells[2].Value.ToString();
+                CustomInput.DefaultValue = Grid_Tables.SelectedRows [0].Cells [2].Value.ToString ();
                 CustomInput.ReturnValue = "";
                 CustomInput.MessageText = "نام و نام خانوادگي";
                 CustomInput.Cancelled = true;
@@ -228,7 +228,7 @@ namespace ZagrosDesktop
                     }
                 if (ZagrApp.UpdatePerson (PersonTitle, PersonName, PersonNote, PersonId))
                     {
-                    ZagrApp.RefeedTables (16, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (16, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                     ShowData ("tblPersons");
                     }
                 else
@@ -250,6 +250,7 @@ namespace ZagrosDesktop
         //btns: Accs
         private void btn_Accs_Click (object sender, EventArgs e)
             {
+            ZagrApp.RefeedTables (1, false, 0); //[0]:all 1:expenses 2:payments 3:charge            
             ShowData ("tblAccs");
             }
         private void btn_DeleteAccItem_Click (object sender, EventArgs e)
@@ -270,7 +271,7 @@ namespace ZagrosDesktop
                         ZagrApp.DeleteTransaction (Convert.ToInt32 (Grid_Tables [0, r.Index].Value));
                         cnt++;
                         }
-                    ZagrApp.RefeedTables (1, false); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
+                    ZagrApp.RefeedTables (1, false, 0); //all=63 {1:Accs 2:Cats 4:Periods 8:PeriodsUnits 16:Persons 32:Units}
                     ShowData ("tblAccs");
                     MessageBox.Show ("تعداد " + cnt.ToString () + " آيتم انتخاب شده توسط شما از حساب حذف شد");
                     }
@@ -294,22 +295,37 @@ namespace ZagrosDesktop
                     MessageBox.Show ("شارژهاي صادر شده را نمي توانيد بصورت دستي ويرايش کنيد");
                     return;
                     }
-                    DialogResult myAnsw = MessageBox.Show ("آيتم انتخاب شده ويرايش شود؟\n\nتوجه: شارژهاي صادره ممکن است بي اعتبار شوند\n\n\nادامه مي دهيد؟", "تاييد کنيد", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                    if (myAnsw == DialogResult.No)
-                        {
-                        return;
-                        }
-                    else
-                        {
-                        //open form
-                        ZagrApp.RequestModeNew_Edit = "Edit";
-                        var frmTransactions = new frmTransaction ();
-                        frmTransactions.ShowDialog ();
-                        //refresh grid
-                        ZagrApp.RefeedTables (1, false);
-                        ShowData ("tblAccs");
-                        }
+                DialogResult myAnsw = MessageBox.Show ("آيتم انتخاب شده ويرايش شود؟\n\nتوجه: شارژهاي صادره ممکن است بي اعتبار شوند\n\n\nادامه مي دهيد؟", "تاييد کنيد", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                if (myAnsw == DialogResult.No)
+                    {
+                    return;
+                    }
+                else
+                    {
+                    //open form
+                    ZagrApp.RequestModeNew_Edit = "Edit";
+                    var frmTransactions = new frmTransaction ();
+                    frmTransactions.ShowDialog ();
+                    //refresh grid
+                    ZagrApp.RefeedTables (1, false, 0);
+                    ShowData ("tblAccs");
+                    }
                 }
+            }
+        private void btn_Accs_Expenses_Click (object sender, EventArgs e)
+            {
+            ZagrApp.RefeedTables (1, false, 1); //0:all [1]:expenses 2:payments 3:charge
+            ShowData ("tblAccs");
+            }
+        private void btn_Accs_Payments_Click (object sender, EventArgs e)
+            {
+            ZagrApp.RefeedTables (1, false, 2); //0:all 1:expenses [2]:payments 3:charge
+            ShowData ("tblAccs");
+            }
+        private void btn_Accs_Charges_Click (object sender, EventArgs e)
+            {
+            ZagrApp.RefeedTables (1, false, 3); //0:all 1:expenses 2:payments [3]:charge
+            ShowData ("tblAccs");
             }
         //methods
         private void ShowData (string tbl)
