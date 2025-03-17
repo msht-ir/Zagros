@@ -258,7 +258,7 @@ namespace ZagrosDesktop
                                 T.Id = 0;
                                 T.Datum = txt_Datum.Text;
                                 T.Subjectx = txt_Subject.Text;
-                                T.Amount = Convert.ToInt32 (txt_Amount.Text);
+                                T.Amount = Convert.ToInt32 (txt_Amount.Text) * (-1); //expenses: negative values
                                 T.CatId = (int) cbo_Cats.SelectedValue;
                                 T.PeriodId = (int) cbo_Periods.SelectedValue;
                                 T.UnitId = 0;
